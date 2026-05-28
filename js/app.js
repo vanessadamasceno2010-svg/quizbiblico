@@ -1,5 +1,5 @@
 // ============================================
-// APP CONTROLLER v3.0 - MODO FAMÍLIA
+// APP CONTROLLER v3.1 - FAMÍLIA + NAVEGAÇÃO
 // ============================================
 
 const profileManager = new ProfileManager();
@@ -10,71 +10,275 @@ const dailyRewardsManager = new DailyRewardsManager(game);
 let selectedAvatar = '😀';
 let selectedCreateAge = null;
 let currentFamilyRankSort = 'score';
+let navigationHistory = [];
+let modalConfirmCallback = null;
+
+// ============================================
+// NOVIDADES DA VERSÃO
+// ============================================
+const APP_UPDATES = {
+    version: '3.1',
+    date: '2025',
+    items: [
+        { icon: '👨‍👩‍👧‍👦', title: 'Modo Família', desc: 'Crie vários perfis no mesmo aparelho' },
+        { icon: '🏆', title: 'Ranking Família', desc: 'Compare pontos entre membros da família' },
+        { icon: '⬅️', title: 'Navegação por Teclado', desc: 'Use ESC ou Backspace para voltar' },
+        { icon: '💡', title: 'Sistema de Dicas', desc: '50:50, Pular, Tempo extra e Versículo' },
+        { icon: '🎁', title: 'Recompensas Diárias', desc: 'Volte todo dia e ganhe gemas' },
+        { icon: '🏅', title: '35 Conquistas', desc: 'Desbloqueie todas as conquistas' },
+        { icon: '📊', title: 'Estatísticas', desc: 'Veja seu desempenho detalhado' },
+        { icon: '🌙', title: 'Tema Claro/Escuro', desc: 'Alterne entre os temas' }
+    ]
+};
 
 // ========================================
 // INICIALIZAÇÃO
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Inicializando Quiz Bíblico v3.1');
+
     createParticles();
     loadGlobalSettings();
-    setupEventListeners();
+    setupAllEventListeners();
 
     const profiles = profileManager.getAllProfiles();
+    console.log('Perfis encontrados:', profiles.length);
+
     if (profiles.length === 0) {
-        // Primeiro acesso
         showScreen('screen-create-profile');
         renderAvatarGrid('create-avatar-grid', 'create');
         setupCreateProfileForm();
     } else {
         const currentId = profileManager.getCurrentProfileId();
         if (currentId && profileManager.getCurrentProfile()) {
-            // Tem perfil ativo, vai direto pra home
             enterHome();
         } else {
-            // Mostra seleção de perfil
             showProfileSelect();
         }
     }
 });
 
 // ========================================
-// EVENT LISTENERS GLOBAIS
+// SETUP DE TODOS OS EVENT LISTENERS
 // ========================================
-function setupEventListeners() {
-    // Popups - botão de fechar com event listener (não onclick inline)
-    document.getElementById('btn-close-ach-popup').addEventListener('click', closeAchievementPopup);
-    document.getElementById('btn-close-daily-popup').addEventListener('click', closeDailyPopup);
+function setupAllEventListeners() {
+    console.log('Configurando event listeners...');
 
-    // Modal
-    document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+    // ===== POPUP CONQUISTA =====
+    const btnAch = document.getElementById('btn-close-ach-popup');
+    if (btnAch) {
+        btnAch.addEventListener('click', function() {
+            console.log('Click: Fechar conquista');
+            closeAchievementPopup();
+        });
+    }
 
-    // Quiz
-    document.getElementById('btn-next').addEventListener('click', nextQuestion);
-    document.getElementById('btn-daily-claim').addEventListener('click', claimDailyReward);
+    // ===== POPUP RECOMPENSA DIÁRIA =====
+    const btnDaily = document.getElementById('btn-close-daily-popup');
+    if (btnDaily) {
+        btnDaily.addEventListener('click', function() {
+            console.log('Click: Fechar daily');
+            closeDailyPopup();
+        });
+    }
 
-    // Resultado
-    document.getElementById('btn-restart-quiz').addEventListener('click', restartQuiz);
-    document.getElementById('btn-back-categories').addEventListener('click', () => showScreen('screen-categories'));
-    document.getElementById('btn-back-home').addEventListener('click', () => showScreen('screen-home'));
+    // ===== MODAL CANCELAR =====
+    const btnModalCancel = document.getElementById('modal-cancel-btn');
+    if (btnModalCancel) {
+        btnModalCancel.addEventListener('click', closeModal);
+    }
 
-    // Import file
-    document.getElementById('import-file-input').addEventListener('change', importDataFile);
+    // ===== QUIZ: PRÓXIMA =====
+    const btnNext = document.getElementById('btn-next');
+    if (btnNext) {
+        btnNext.addEventListener('click', function() {
+            console.log('Click: Próxima pergunta');
+            nextQuestion();
+        });
+    }
 
-    // Teclado
+    // ===== DAILY REWARDS: COLETAR =====
+    const btnDailyClaim = document.getElementById('btn-daily-claim');
+    if (btnDailyClaim) {
+        btnDailyClaim.addEventListener('click', function() {
+            console.log('Click: Coletar recompensa');
+            claimDailyReward();
+        });
+    }
+
+    // ===== RESULTADO: BOTÕES =====
+    const btnRestart = document.getElementById('btn-restart-quiz');
+    if (btnRestart) {
+        btnRestart.addEventListener('click', function() {
+            console.log('Click: Reiniciar quiz');
+            restartQuiz();
+        });
+    }
+
+    const btnBackCat = document.getElementById('btn-back-categories');
+    if (btnBackCat) {
+        btnBackCat.addEventListener('click', function() {
+            console.log('Click: Voltar categorias');
+            navigateTo('screen-categories');
+        });
+    }
+
+    const btnBackHome = document.getElementById('btn-back-home');
+    if (btnBackHome) {
+        btnBackHome.addEventListener('click', function() {
+            console.log('Click: Voltar home');
+            navigationHistory = [];
+            showScreen('screen-home');
+        });
+    }
+
+    // ===== IMPORT FILE =====
+    const importInput = document.getElementById('import-file-input');
+    if (importInput) {
+        importInput.addEventListener('change', importDataFile);
+    }
+
+    // ===== TECLADO =====
     document.addEventListener('keydown', handleKeyboard);
 
-    // Quiz timeout
+    // ===== QUIZ TIMEOUT =====
     document.addEventListener('quizTimeout', handleQuizTimeout);
+
+    console.log('✅ Event listeners configurados');
+}
+
+// ========================================
+// NAVEGAÇÃO COM HISTÓRICO
+// ========================================
+function showScreen(screenId, addToHistory = false) {
+    const currentActive = document.querySelector('.screen.active');
+    const currentId = currentActive ? currentActive.id : null;
+
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const screen = document.getElementById(screenId);
+    if (!screen) {
+        console.error('Tela não encontrada:', screenId);
+        return;
+    }
+
+    screen.classList.add('active');
+    screen.style.animation = 'none';
+    screen.offsetHeight;
+    screen.style.animation = 'fadeIn 0.4s ease';
+
+    // Render específico de cada tela
+    if (screenId === 'screen-home') {
+        updateHomeStats();
+        updateHomeProfile();
+        updateDailyBanner();
+        updateAchievementNotif();
+        showRecommendedAge();
+        renderUpdatesCard();
+    }
+    if (screenId === 'screen-ranking') renderRanking('all');
+    if (screenId === 'screen-family-ranking') renderFamilyRanking(currentFamilyRankSort);
+    if (screenId === 'screen-achievements') {
+        renderAchievements('all');
+        achievementsManager.markAllSeen();
+        updateAchievementNotif();
+    }
+    if (screenId === 'screen-daily') renderDailyRewards();
+    if (screenId === 'screen-profile') renderProfileScreen();
+    if (screenId === 'screen-stats') renderStatsScreen();
+    if (screenId === 'screen-settings') renderSettingsScreen();
+    if (screenId === 'screen-profile-select') renderProfilesList();
+}
+
+function navigateTo(screenId) {
+    const currentActive = document.querySelector('.screen.active');
+    const currentId = currentActive ? currentActive.id : null;
+
+    if (currentId && currentId !== screenId) {
+        navigationHistory.push(currentId);
+        if (navigationHistory.length > 20) {
+            navigationHistory.shift();
+        }
+    }
+    showScreen(screenId);
+}
+
+function goBack() {
+    // Se há modal/popup aberto, fecha primeiro
+    if (!document.getElementById('modal-overlay').classList.contains('hidden')) {
+        closeModal();
+        return;
+    }
+    if (!document.getElementById('achievement-popup').classList.contains('hidden')) {
+        closeAchievementPopup();
+        return;
+    }
+    if (!document.getElementById('daily-popup').classList.contains('hidden')) {
+        closeDailyPopup();
+        return;
+    }
+
+    const currentActive = document.querySelector('.screen.active');
+    if (!currentActive) return;
+    const currentId = currentActive.id;
+
+    // Telas que não podem voltar
+    if (currentId === 'screen-create-profile' && profileManager.getAllProfiles().length === 0) {
+        return; // Não pode voltar se não tem perfil
+    }
+
+    if (currentId === 'screen-profile-select') {
+        return; // Tela inicial de seleção
+    }
+
+    if (currentId === 'screen-home') {
+        // Da home, sai para selecionar perfil
+        showProfileSelect();
+        return;
+    }
+
+    if (currentId === 'screen-quiz') {
+        confirmExit();
+        return;
+    }
+
+    if (currentId === 'screen-result') {
+        // Do resultado vai para categorias
+        navigationHistory = [];
+        showScreen('screen-categories');
+        return;
+    }
+
+    // Volta para a tela anterior no histórico
+    if (navigationHistory.length > 0) {
+        const previousScreen = navigationHistory.pop();
+        showScreen(previousScreen);
+    } else {
+        showScreen('screen-home');
+    }
 }
 
 function handleKeyboard(e) {
+    // ESC ou Backspace para voltar
+    if (e.key === 'Escape' || (e.key === 'Backspace' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) {
+        e.preventDefault();
+        goBack();
+        return;
+    }
+
+    // Quiz - respostas com teclado
     if (document.getElementById('screen-quiz')?.classList.contains('active') && !game.isAnswered) {
         const keyMap = { '1': 0, '2': 1, '3': 2, '4': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
-        if (keyMap.hasOwnProperty(e.key.toLowerCase())) selectAnswer(keyMap[e.key.toLowerCase()]);
+        if (keyMap.hasOwnProperty(e.key.toLowerCase())) {
+            selectAnswer(keyMap[e.key.toLowerCase()]);
+        }
     }
+
+    // Enter para próxima pergunta
     if (e.key === 'Enter') {
         const fb = document.getElementById('feedback-card');
-        if (fb && !fb.classList.contains('hidden')) nextQuestion();
+        if (fb && !fb.classList.contains('hidden')) {
+            nextQuestion();
+        }
     }
 }
 
@@ -99,9 +303,68 @@ function createParticles() {
 }
 
 // ========================================
+// CARD DE NOVIDADES
+// ========================================
+function renderUpdatesCard() {
+    const container = document.getElementById('updates-card');
+    if (!container) return;
+
+    const profile = profileManager.getCurrentProfile();
+    const seenKey = `updates_seen_${APP_UPDATES.version}_${profile?.id || 'global'}`;
+    const seen = localStorage.getItem(seenKey) === 'true';
+
+    container.innerHTML = `
+        <div class="updates-card-header" onclick="toggleUpdatesCard()">
+            <div class="uc-left">
+                <span class="uc-icon">🎉</span>
+                <div class="uc-text">
+                    <span class="uc-title">Novidades v${APP_UPDATES.version}</span>
+                    <span class="uc-sub">Confira o que há de novo!</span>
+                </div>
+            </div>
+            ${!seen ? '<span class="uc-badge">NOVO</span>' : ''}
+            <span class="uc-arrow" id="uc-arrow">▼</span>
+        </div>
+        <div class="updates-card-body hidden" id="updates-card-body">
+            <div class="updates-list">
+                ${APP_UPDATES.items.map(item => `
+                    <div class="update-item">
+                        <span class="update-item-icon">${item.icon}</span>
+                        <div class="update-item-text">
+                            <div class="update-item-title">${item.title}</div>
+                            <div class="update-item-desc">${item.desc}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function toggleUpdatesCard() {
+    const body = document.getElementById('updates-card-body');
+    const arrow = document.getElementById('uc-arrow');
+    const badge = document.querySelector('.uc-badge');
+
+    if (body.classList.contains('hidden')) {
+        body.classList.remove('hidden');
+        arrow.textContent = '▲';
+        if (badge) badge.remove();
+
+        const profile = profileManager.getCurrentProfile();
+        const seenKey = `updates_seen_${APP_UPDATES.version}_${profile?.id || 'global'}`;
+        localStorage.setItem(seenKey, 'true');
+    } else {
+        body.classList.add('hidden');
+        arrow.textContent = '▼';
+    }
+}
+
+// ========================================
 // PROFILE SELECT
 // ========================================
 function showProfileSelect() {
+    navigationHistory = [];
     showScreen('screen-profile-select');
     renderProfilesList();
 }
@@ -111,7 +374,7 @@ function renderProfilesList() {
     const profiles = profileManager.getAllProfiles();
 
     if (profiles.length === 0) {
-        container.innerHTML = '<p class="empty-msg">Nenhum perfil criado ainda.</p>';
+        container.innerHTML = '<p class="empty-msg">Nenhum perfil criado.</p>';
         return;
     }
 
@@ -151,7 +414,7 @@ function selectProfile(id) {
 }
 
 function showCreateProfile() {
-    showScreen('screen-create-profile');
+    navigateTo('screen-create-profile');
     document.getElementById('create-name').value = '';
     selectedCreateAge = null;
     selectedAvatar = '😀';
@@ -205,7 +468,7 @@ function deleteProfilePrompt() {
     const profile = profileManager.getCurrentProfile();
     showModal(
         'Excluir Perfil?',
-        `Tem certeza que deseja excluir "${profile.name}"? Esta ação não pode ser desfeita.`,
+        `Excluir "${profile.name}"? Esta ação não pode ser desfeita.`,
         () => {
             profileManager.deleteProfile(profile.id);
             showToast('🗑', 'Perfil excluído');
@@ -245,13 +508,8 @@ function renderAvatarGrid(containerId, context) {
 // ENTRAR NO HOME
 // ========================================
 function enterHome() {
+    navigationHistory = [];
     showScreen('screen-home');
-    updateHomeStats();
-    updateHomeProfile();
-    updateDailyBanner();
-    updateAchievementNotif();
-    updateVerseOfDay();
-    showRecommendedAge();
 }
 
 function showRecommendedAge() {
@@ -272,41 +530,11 @@ function showRecommendedAge() {
             <span class="ra-label">Recomendado para você:</span>
             <span class="ra-name">${age.name}</span>
         </div>
-        <button class="ra-btn" onclick="selectAgeGroup('${profile.ageGroup}')">Jogar →</button>
+        <button class="ra-btn" id="ra-play-btn">Jogar →</button>
     `;
-}
-
-// ========================================
-// NAVEGAÇÃO
-// ========================================
-function showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    const screen = document.getElementById(screenId);
-    if (!screen) return;
-    screen.classList.add('active');
-    screen.style.animation = 'none';
-    screen.offsetHeight;
-    screen.style.animation = 'fadeIn 0.4s ease';
-
-    if (screenId === 'screen-home') {
-        updateHomeStats();
-        updateHomeProfile();
-        updateDailyBanner();
-        updateAchievementNotif();
-        showRecommendedAge();
-    }
-    if (screenId === 'screen-ranking') renderRanking('all');
-    if (screenId === 'screen-family-ranking') renderFamilyRanking(currentFamilyRankSort);
-    if (screenId === 'screen-achievements') {
-        renderAchievements('all');
-        achievementsManager.markAllSeen();
-        updateAchievementNotif();
-    }
-    if (screenId === 'screen-daily') renderDailyRewards();
-    if (screenId === 'screen-profile') renderProfileScreen();
-    if (screenId === 'screen-stats') renderStatsScreen();
-    if (screenId === 'screen-settings') renderSettingsScreen();
-    if (screenId === 'screen-profile-select') renderProfilesList();
+    document.getElementById('ra-play-btn').addEventListener('click', () => {
+        selectAgeGroup(profile.ageGroup);
+    });
 }
 
 // ========================================
@@ -356,15 +584,15 @@ function updateDailyBanner() {
     const daySpan = document.getElementById('drb-day');
     const canClaim = dailyRewardsManager.canClaim();
     const currentDay = dailyRewardsManager.getCurrentDay();
-    daySpan.textContent = ((currentDay - 1) % 7) + 1;
+    if (daySpan) daySpan.textContent = ((currentDay - 1) % 7) + 1;
 
     if (canClaim) {
         banner.classList.remove('claimed');
-        sub.textContent = 'Toque para coletar sua recompensa!';
+        if (sub) sub.textContent = 'Toque para coletar!';
     } else {
         banner.classList.add('claimed');
         const time = dailyRewardsManager.getTimeUntilNextReward();
-        sub.textContent = time ? `Próxima em ${time.hours}h ${time.minutes}min` : 'Coletada hoje!';
+        if (sub) sub.textContent = time ? `Próxima em ${time.hours}h ${time.minutes}min` : 'Coletada hoje!';
     }
 }
 
@@ -519,7 +747,7 @@ function renderWeekChart() {
 function selectAgeGroup(ageGroup) {
     game.currentAgeGroup = ageGroup;
     renderCategories(ageGroup);
-    showScreen('screen-categories');
+    navigateTo('screen-categories');
 }
 
 function renderCategories(ageGroup) {
@@ -566,7 +794,7 @@ function renderCategories(ageGroup) {
 // ========================================
 function startCategory(ageGroup, category) {
     game.startQuiz(ageGroup, category);
-    showScreen('screen-quiz');
+    navigateTo('screen-quiz');
     document.getElementById('quiz-gems').textContent = '0';
     renderQuestion();
 }
@@ -670,9 +898,15 @@ function showFeedback(result, isTimeout = false) {
 }
 
 function nextQuestion() {
+    console.log('nextQuestion chamada');
     const result = game.nextQuestion();
-    if (result.finished) showResult();
-    else renderQuestion();
+    if (result.finished) {
+        console.log('Quiz finalizado, mostrando resultado');
+        showResult();
+    } else {
+        console.log('Próxima pergunta:', result.questionNumber);
+        renderQuestion();
+    }
 }
 
 // HINTS
@@ -835,8 +1069,11 @@ function filterAchievements(filter, btn) {
 }
 
 function closeAchievementPopup() {
+    console.log('Fechando popup conquista');
     document.getElementById('achievement-popup').classList.add('hidden');
-    achievementsManager.showNextPopup();
+    setTimeout(() => {
+        achievementsManager.showNextPopup();
+    }, 300);
     updateHomeStats();
 }
 
@@ -913,8 +1150,12 @@ function renderDailyRewards() {
 }
 
 function claimDailyReward() {
+    console.log('Coletando recompensa diária');
     const result = dailyRewardsManager.claim();
-    if (!result) return;
+    if (!result) {
+        console.log('Não pode coletar');
+        return;
+    }
     showDailyPopup(result);
     renderDailyRewards();
     updateHomeStats();
@@ -953,6 +1194,7 @@ function showDailyPopup(result) {
 }
 
 function closeDailyPopup() {
+    console.log('Fechando popup daily');
     document.getElementById('daily-popup').classList.add('hidden');
     updateDailyBanner();
 }
@@ -989,7 +1231,6 @@ function createConfetti() {
     }
 }
 
-// SONS
 function playCorrectSound() {
     if (!profileManager.getGlobalSettings().sound) return;
     try {
@@ -1120,9 +1361,7 @@ function renderFamilyRanking(sortBy) {
                 <div class="frank-avatar">${p.avatar}</div>
                 <div class="frank-info">
                     <div class="frank-name">${p.name} ${isCurrent ? '<span class="frank-you">VOCÊ</span>' : ''}</div>
-                    <div class="frank-details">
-                        ${ageNames[p.ageGroup]} • Nível ${p.level.num} ${p.level.name}
-                    </div>
+                    <div class="frank-details">${ageNames[p.ageGroup]} • Nível ${p.level.num} ${p.level.name}</div>
                     <div class="frank-mini-stats">
                         <span>🏆 ${formatNumber(p.score)}</span>
                         <span>⭐ ${p.stars}</span>
@@ -1237,31 +1476,29 @@ function importDataFile(event) {
 }
 
 function resetAllData() {
-    showModal('Resetar Tudo?', '⚠️ TODOS os perfis e dados serão apagados! Esta ação é IRREVERSÍVEL.', () => {
-        localStorage.removeItem('bibleQuizFamily');
-        localStorage.removeItem('currentProfileId');
-        localStorage.removeItem('bibleQuizData');
+    showModal('Resetar Tudo?', '⚠️ TODOS os perfis serão apagados! IRREVERSÍVEL.', () => {
+        localStorage.clear();
         showToast('🗑', 'Resetado! Recarregando...');
         setTimeout(() => location.reload(), 1000);
     });
 }
 
 // ========================================
-// MODAL GENÉRICO
+// MODAL GENÉRICO (com botão único)
 // ========================================
-let modalConfirmCallback = null;
-
 function showModal(title, text, onConfirm) {
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-text').textContent = text;
     modalConfirmCallback = onConfirm;
 
-    const confirmBtn = document.getElementById('modal-confirm-btn');
-    const newBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
-    newBtn.addEventListener('click', () => {
+    // Recria o botão para evitar múltiplos listeners
+    const oldBtn = document.getElementById('modal-confirm-btn');
+    const newBtn = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+    newBtn.addEventListener('click', function() {
+        const callback = modalConfirmCallback;
         closeModal();
-        if (modalConfirmCallback) modalConfirmCallback();
+        if (callback) callback();
     });
 
     document.getElementById('modal-overlay').classList.remove('hidden');

@@ -1,9 +1,10 @@
 // ============================================
-// MOTOR DO JOGO - QUIZ BÍBLICO v2.0
+// MOTOR DO JOGO - QUIZ BÍBLICO v3.0
 // ============================================
 
 class BibleQuizGame {
-    constructor() {
+    constructor(profileManager) {
+        this.profileManager = profileManager;
         this.currentAgeGroup = null;
         this.currentCategory = null;
         this.currentQuestions = [];
@@ -19,81 +20,31 @@ class BibleQuizGame {
         this.startTime = null;
         this.isAnswered = false;
         this.hintsUsed = { fifty: false, time: false, verse: false };
-        this.playerData = this.loadPlayerData();
 
         this.timePerQuestion = { children: 45, kids: 35, teens: 30, adults: 25, scholars: 20 };
         this.questionsPerRound = { children: 6, kids: 8, teens: 10, adults: 10, scholars: 8 };
 
-        this.levelNames = [
-            "Iniciante", "Aprendiz", "Estudante", "Conhecedor", "Sábio",
-            "Mestre", "Doutor da Lei", "Escriba Real", "Profeta", "Ancião"
-        ];
+        this.levelNames = ["Iniciante", "Aprendiz", "Estudante", "Conhecedor", "Sábio", "Mestre", "Doutor da Lei", "Escriba Real", "Profeta", "Ancião"];
         this.levelXP = [0, 100, 250, 500, 1000, 2000, 3500, 5500, 8000, 12000];
-
         this.hintCosts = { fifty: 5, skip: 8, time: 3, verse: 4 };
     }
 
-    loadPlayerData() {
-        const saved = localStorage.getItem('bibleQuizData');
-        if (saved) {
-            try {
-                const data = JSON.parse(saved);
-                if (!data.gems) data.gems = 0;
-                if (!data.achievements) data.achievements = {};
-                if (!data.profile) data.profile = { name: 'Jogador', avatar: '😀', created: null };
-                if (!data.settings) data.settings = { theme: 'dark', sound: true, vibration: true };
-                if (!data.stats) {
-                    data.stats = {
-                        totalQuizzes: 0, perfectQuizzes: 0, maxCombo: 0,
-                        ageGroupsPlayed: [], fastestQuiz: 0, dailyRewardsClaimed: 0,
-                        totalQuestionsAnswered: 0, totalCorrectAnswers: 0, totalTimeSpent: 0,
-                        categoryStats: {}, ageGroupStats: {}, dailyActivity: {}
-                    };
-                }
-                if (!data.stats.categoryStats) data.stats.categoryStats = {};
-                if (!data.stats.ageGroupStats) data.stats.ageGroupStats = {};
-                if (!data.stats.dailyActivity) data.stats.dailyActivity = {};
-                if (!data.daily) {
-                    data.daily = {
-                        currentDay: 1, lastClaimDate: null, totalClaimed: 0,
-                        history: [], streakBonusesClaimed: []
-                    };
-                }
-                return data;
-            } catch (e) {
-                console.error('Erro ao carregar dados:', e);
-            }
-        }
-        return {
-            totalScore: 0, totalStars: 0, xp: 0, gems: 0,
-            streak: 0, lastPlayed: null, categories: {},
-            rankings: [], achievements: {},
-            profile: { name: 'Jogador', avatar: '😀', created: null },
-            settings: { theme: 'dark', sound: true, vibration: true },
-            stats: {
-                totalQuizzes: 0, perfectQuizzes: 0, maxCombo: 0,
-                ageGroupsPlayed: [], fastestQuiz: 0, dailyRewardsClaimed: 0,
-                totalQuestionsAnswered: 0, totalCorrectAnswers: 0, totalTimeSpent: 0,
-                categoryStats: {}, ageGroupStats: {}, dailyActivity: {}
-            },
-            daily: {
-                currentDay: 1, lastClaimDate: null, totalClaimed: 0,
-                history: [], streakBonusesClaimed: []
-            }
-        };
+    get playerData() {
+        const profile = this.profileManager.getCurrentProfile();
+        return profile ? profile.playerData : this.profileManager.createEmptyPlayerData();
     }
 
     savePlayerData() {
-        localStorage.setItem('bibleQuizData', JSON.stringify(this.playerData));
+        const profile = this.profileManager.getCurrentProfile();
+        if (profile) {
+            this.profileManager.saveProfileData(profile.id, profile.playerData);
+        }
     }
 
     getPlayerLevel() {
         let level = 0;
         for (let i = this.levelXP.length - 1; i >= 0; i--) {
-            if (this.playerData.xp >= this.levelXP[i]) {
-                level = i;
-                break;
-            }
+            if (this.playerData.xp >= this.levelXP[i]) { level = i; break; }
         }
         return level;
     }
@@ -295,16 +246,12 @@ class BibleQuizGame {
     useFiftyFifty() {
         if (this.hintsUsed.fifty || this.isAnswered) return null;
         if (this.playerData.gems < this.hintCosts.fifty) return { error: 'no_gems' };
-
         this.playerData.gems -= this.hintCosts.fifty;
         this.hintsUsed.fifty = true;
         this.savePlayerData();
-
         const question = this.currentQuestions[this.currentQuestionIndex];
         const wrongIndices = [];
-        question.options.forEach((_, i) => {
-            if (i !== question.correct) wrongIndices.push(i);
-        });
+        question.options.forEach((_, i) => { if (i !== question.correct) wrongIndices.push(i); });
         this.shuffleArray(wrongIndices);
         return { success: true, toHide: wrongIndices.slice(0, 2) };
     }
@@ -312,7 +259,6 @@ class BibleQuizGame {
     useSkip() {
         if (this.isAnswered) return null;
         if (this.playerData.gems < this.hintCosts.skip) return { error: 'no_gems' };
-
         this.playerData.gems -= this.hintCosts.skip;
         this.savePlayerData();
         this.clearTimer();
@@ -324,7 +270,6 @@ class BibleQuizGame {
     useExtraTime() {
         if (this.hintsUsed.time || this.isAnswered) return null;
         if (this.playerData.gems < this.hintCosts.time) return { error: 'no_gems' };
-
         this.playerData.gems -= this.hintCosts.time;
         this.hintsUsed.time = true;
         this.timeLeft += 15;
@@ -336,11 +281,9 @@ class BibleQuizGame {
     useVerseHint() {
         if (this.hintsUsed.verse || this.isAnswered) return null;
         if (this.playerData.gems < this.hintCosts.verse) return { error: 'no_gems' };
-
         this.playerData.gems -= this.hintCosts.verse;
         this.hintsUsed.verse = true;
         this.savePlayerData();
-
         const question = this.currentQuestions[this.currentQuestionIndex];
         return {
             success: true,
@@ -422,44 +365,19 @@ class BibleQuizGame {
         this.savePlayerData();
 
         let title, message, animation;
-        if (pct === 100) {
-            title = "PERFEITO! 🌟";
-            message = "Incrível conhecimento bíblico!";
-            animation = "🏆";
-        } else if (pct >= 80) {
-            title = "Excelente! 🎉";
-            message = "Ótimo conhecimento da Palavra!";
-            animation = "🌟";
-        } else if (pct >= 60) {
-            title = "Muito Bom! 👏";
-            message = "Continue estudando!";
-            animation = "😊";
-        } else if (pct >= 40) {
-            title = "Bom Esforço! 💪";
-            message = "Pratique mais!";
-            animation = "📖";
-        } else {
-            title = "Continue! 🙏";
-            message = "Leia mais a Bíblia!";
-            animation = "💪";
-        }
+        if (pct === 100) { title = "PERFEITO! 🌟"; message = "Incrível conhecimento bíblico!"; animation = "🏆"; }
+        else if (pct >= 80) { title = "Excelente! 🎉"; message = "Ótimo conhecimento!"; animation = "🌟"; }
+        else if (pct >= 60) { title = "Muito Bom! 👏"; message = "Continue estudando!"; animation = "😊"; }
+        else if (pct >= 40) { title = "Bom Esforço! 💪"; message = "Pratique mais!"; animation = "📖"; }
+        else { title = "Continue! 🙏"; message = "Leia mais a Bíblia!"; animation = "💪"; }
 
         const verse = MOTIVATIONAL_VERSES[Math.floor(Math.random() * MOTIVATIONAL_VERSES.length)];
 
         return {
-            score: this.score,
-            correct: this.correctAnswers,
-            total,
-            percentage: pct,
-            stars,
-            xpGain,
-            gemsEarned: this.gemsEarned,
-            elapsedTime: elapsed,
-            maxCombo: this.maxCombo,
-            title,
-            message,
-            animation,
-            verse
+            score: this.score, correct: this.correctAnswers, total,
+            percentage: pct, stars, xpGain, gemsEarned: this.gemsEarned,
+            elapsedTime: elapsed, maxCombo: this.maxCombo,
+            title, message, animation, verse
         };
     }
 

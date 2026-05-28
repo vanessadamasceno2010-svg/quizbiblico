@@ -934,3 +934,173 @@ body.font-large { --font-scale: 1.15; }
     .age-select-grid { grid-template-columns: repeat(3, 1fr); }
     .family-ranking-tabs { grid-template-columns: repeat(2, 1fr); }
 }
+/* ============================================
+   CARD DE NOVIDADES
+   ============================================ */
+.updates-card {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(108, 99, 255, 0.15));
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: var(--radius);
+    margin: 15px 0;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.updates-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.updates-card-header:hover {
+    background: rgba(168, 85, 247, 0.05);
+}
+
+.uc-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.uc-icon {
+    font-size: 1.8rem;
+    animation: bounce 2s ease infinite;
+}
+
+.uc-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.uc-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--epic-color);
+}
+
+.uc-sub {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.uc-badge {
+    padding: 3px 8px;
+    background: var(--danger);
+    border-radius: var(--radius-full);
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: white;
+    margin-right: 8px;
+    animation: notifPulse 1.5s ease-in-out infinite;
+}
+
+.uc-arrow {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    transition: transform 0.3s ease;
+}
+
+.updates-card-body {
+    padding: 0 16px 16px;
+    border-top: 1px solid rgba(168, 85, 247, 0.15);
+    animation: slideDown 0.3s ease;
+}
+
+.updates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.update-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--glass);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.update-item:hover {
+    background: rgba(168, 85, 247, 0.1);
+    transform: translateX(3px);
+}
+
+.update-item-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.update-item-text {
+    flex: 1;
+}
+
+.update-item-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.update-item-desc {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* ============================================
+   DICA DE TECLADO
+   ============================================ */
+.keyboard-tip {
+    text-align: center;
+    padding: 12px;
+    margin: 15px 0 30px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: var(--glass);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--card-border);
+}
+
+.keyboard-tip kbd {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 0 2px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--primary-light);
+}
+
+/* ============================================
+   GARANTIR QUE BOTÕES FUNCIONEM
+   ============================================ */
+button {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.btn-primary, .btn-secondary, .btn-danger, .btn-next, .btn-icon,
+.btn-back, .btn-daily-claim {
+    position: relative;
+    z-index: 10;
+}
+
+.modal, .ach-popup-card, .daily-popup-card {
+    pointer-events: auto;
+}
+
+.modal button, .ach-popup-card button, .daily-popup-card button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}

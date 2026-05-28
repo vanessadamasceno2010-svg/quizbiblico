@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="Quiz Bíblico - Teste seus conhecimentos sobre a Palavra de Deus">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✝</text></svg>">
+    <title>Quiz Bíblico</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <div class="particles" id="particles"></div>
+
+        <!-- ========== TELA DE BOAS-VINDAS / PERFIL INICIAL ========== -->
+        <section id="screen-welcome" class="screen">
+            <div class="container">
+                <div class="welcome-hero">
+                    <div class="logo-icon">✝</div>
+                    <h1 class="title">Quiz Bíblico</h1>
+                    <p class="subtitle">Bem-vindo! Vamos configurar seu perfil</p>
+                </div>
+                <div class="welcome-form">
+                    <label class="form-label">Qual é o seu nome?</label>
+                    <input type="text" id="welcome-name" class="form-input" placeholder="Digite seu nome..." maxlength="20" autocomplete="off">
+                    <label class="form-label" style="margin-top:20px;">Escolha seu avatar:</label>
+                    <div class="avatar-grid" id="welcome-avatar-grid"></div>
+                    <button class="btn-primary" id="btn-welcome-start" onclick="saveProfile()" disabled>
+                        Começar a Jornada! 🚀
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== TELA INICIAL ========== -->
+        <section id="screen-home" class="screen">
+            <div class="container">
+                <!-- Top Bar -->
+                <div class="home-topbar">
+                    <div class="profile-mini" onclick="showScreen('screen-profile')">
+                        <div class="profile-mini-avatar" id="home-avatar">😀</div>
+                        <div class="profile-mini-info">
+                            <span class="profile-mini-name" id="home-name">Jogador</span>
+                            <span class="profile-mini-level" id="home-level">Nível: Iniciante</span>
+                        </div>
+                    </div>
+                    <div class="topbar-actions">
+                        <button class="btn-icon" onclick="toggleTheme()" title="Alternar tema">
+                            <span id="theme-icon">🌙</span>
+                        </button>
+                        <button class="btn-icon" onclick="toggleSound()" title="Som">
+                            <span id="sound-icon">🔊</span>
+                        </button>
+                        <button class="btn-icon" onclick="showScreen('screen-settings')" title="Configurações">⚙️</button>
+                    </div>
+                </div>
+
+                <!-- Daily Reward Banner -->
+                <div class="daily-reward-banner" id="daily-reward-banner" onclick="showScreen('screen-daily')">
+                    <div class="drb-glow"></div>
+                    <div class="drb-content">
+                        <div class="drb-icon">🎁</div>
+                        <div class="drb-text">
+                            <span class="drb-title">Recompensa Diária!</span>
+                            <span class="drb-sub" id="drb-sub">Toque para coletar</span>
+                        </div>
+                        <div class="drb-badge">DIA <span id="drb-day">1</span></div>
+                    </div>
+                </div>
+
+                <!-- Stats Bar -->
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-icon">🏆</span>
+                        <span class="stat-value" id="total-score">0</span>
+                        <span class="stat-label">Pontos</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <span class="stat-value" id="total-stars">0</span>
+                        <span class="stat-label">Estrelas</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🔥</span>
+                        <span class="stat-value" id="streak-count">0</span>
+                        <span class="stat-label">Sequência</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">💎</span>
+                        <span class="stat-value" id="gems-count">0</span>
+                        <span class="stat-label">Gemas</span>
+                    </div>
+                </div>
+
+                <!-- Versículo do Dia -->
+                <div class="verse-of-day" id="verse-of-day">
+                    <div class="vod-label">📖 Versículo do Dia</div>
+                    <p class="vod-text" id="vod-text">"O Senhor é o meu pastor, nada me faltará."</p>
+                    <span class="vod-ref" id="vod-ref">— Salmo 23:1</span>
+                </div>
+
+                <!-- Menu -->
+                <div class="menu-section">
+                    <h2 class="section-title">Escolha sua Faixa Etária</h2>
+                    <div class="age-groups">
+                        <button class="age-btn" data-age="children" onclick="selectAgeGroup('children')">
+                            <div class="age-icon">👶</div>
+                            <div class="age-info">
+                                <h3>Crianças</h3>
+                                <span>4 - 8 anos</span>
+                                <div class="difficulty-dots"><span class="dot filled"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                            </div>
+                            <div class="age-badge">Fácil</div>
+                        </button>
+                        <button class="age-btn" data-age="kids" onclick="selectAgeGroup('kids')">
+                            <div class="age-icon">🧒</div>
+                            <div class="age-info">
+                                <h3>Juniores</h3>
+                                <span>9 - 12 anos</span>
+                                <div class="difficulty-dots"><span class="dot filled"></span><span class="dot filled"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                            </div>
+                            <div class="age-badge">Médio</div>
+                        </button>
+                        <button class="age-btn" data-age="teens" onclick="selectAgeGroup('teens')">
+                            <div class="age-icon">🧑</div>
+                            <div class="age-info">
+                                <h3>Adolescentes</h3>
+                                <span>13 - 17 anos</span>
+                                <div class="difficulty-dots"><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot"></span><span class="dot"></span></div>
+                            </div>
+                            <div class="age-badge">Difícil</div>
+                        </button>
+                        <button class="age-btn" data-age="adults" onclick="selectAgeGroup('adults')">
+                            <div class="age-icon">👨</div>
+                            <div class="age-info">
+                                <h3>Adultos</h3>
+                                <span>18+ anos</span>
+                                <div class="difficulty-dots"><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot"></span></div>
+                            </div>
+                            <div class="age-badge">Expert</div>
+                        </button>
+                        <button class="age-btn" data-age="scholars" onclick="selectAgeGroup('scholars')">
+                            <div class="age-icon">📖</div>
+                            <div class="age-info">
+                                <h3>Teólogos</h3>
+                                <span>Avançado</span>
+                                <div class="difficulty-dots"><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span></div>
+                            </div>
+                            <div class="age-badge">Mestre</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="home-buttons">
+                    <button class="btn-secondary" onclick="showScreen('screen-stats')">📊 Estatísticas</button>
+                    <button class="btn-secondary" onclick="showScreen('screen-achievements')">
+                        🏅 Conquistas <span class="notif-badge hidden" id="achievements-notif">!</span>
+                    </button>
+                    <button class="btn-secondary" onclick="showScreen('screen-daily')">🎁 Recompensas Diárias</button>
+                    <button class="btn-secondary" onclick="showScreen('screen-ranking')">🏅 Ver Ranking</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== TELA DE PERFIL ========== -->
+        <section id="screen-profile" class="screen">
+            <div class="container">
+                <div class="header-bar">
+                    <button class="btn-back" onclick="showScreen('screen-home')">←</button>
+                    <h2>Meu Perfil</h2>
+                    <div></div>
+                </div>
+                <div class="profile-card">
+                    <div class="profile-avatar-large" id="profile-avatar">😀</div>
+                    <h2 class="profile-name" id="profile-name">Jogador</h2>
+                    <div class="profile-title" id="profile-title">Iniciante</div>
+                    <div class="profile-level-bar">
+                        <div class="level-info">
+                            <span class="level-label">Nível <span id="profile-level-num">1</span></span>
+                            <span class="level-name" id="profile-level-name">Iniciante</span>
+                        </div>
+                        <div class="xp-bar"><div class="xp-fill" id="profile-xp-fill" style="width:0%"></div></div>
+                        <span class="xp-text" id="profile-xp-text">0/100 XP</span>
+                    </div>
+                </div>
+                <div class="profile-stats-grid">
+                    <div class="profile-stat-card"><div class="psc-icon">🏆</div><div class="psc-value" id="ps-total-score">0</div><div class="psc-label">Pontos Totais</div></div>
+                    <div class="profile-stat-card"><div class="psc-icon">✅</div><div class="psc-value" id="ps-total-quizzes">0</div><div class="psc-label">Quizzes</div></div>
+                    <div class="profile-stat-card"><div class="psc-icon">💯</div><div class="psc-value" id="ps-perfect">0</div><div class="psc-label">Perfeitos</div></div>
+                    <div class="profile-stat-card"><div class="psc-icon">⭐</div><div class="psc-value" id="ps-stars">0</div><div class="psc-label">Estrelas</div></div>
+                    <div class="profile-stat-card"><div class="psc-icon">🔥</div><div class="psc-value" id="ps-max-combo">0</div><div class="psc-label">Max Combo</div></div>
+                    <div class="profile-stat-card"><div class="psc-icon">💎</div><div class="psc-value" id="ps-gems">0</div><div class="psc-label">Gemas</div></div>
+                </div>
+                <div class="profile-section">
+                    <h3 class="profile-section-title">Editar Perfil</h3>
+                    <label class="form-label">Nome:</label>
+                    <input type="text" id="edit-name" class="form-input" maxlength="20">
+                    <label class="form-label" style="margin-top:12px;">Avatar:</label>
+                    <div class="avatar-grid" id="edit-avatar-grid"></div>
+                    <button class="btn-primary" onclick="updateProfile()" style="margin-top:15px;">Salvar Alterações</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== TELA DE ESTATÍSTICAS ========== -->
+        <section id="screen-stats" class="screen">
+            <div class="container">
+                <div class="header-bar">
+                    <button class="btn-back" onclick="showScreen('screen-home')">←</button>
+                    <h2>Estatísticas</h2>
+                    <div></div>
+                </div>
+                <div class="stats-overview">
+                    <div class="stats-overview-title">📊 Visão Geral</div>
+                    <div class="stats-overview-grid">
+                        <div class="sog-item"><div class="sog-value" id="stat-total-q">0</div><div class="sog-label">Perguntas Respondidas</div></div>
+                        <div class="sog-item"><div class="sog-value" id="stat-correct-q">0</div><div class="sog-label">Respostas Corretas</div></div>
+                        <div class="sog-item"><div class="sog-value" id="stat-accuracy">0%</div><div class="sog-label">Taxa de Acerto</div></div>
+                        <div class="sog-item"><div class="sog-value" id="stat-avg-time">0s</div><div class="sog-label">Tempo Médio</div></div>
+                    </div>
+                </div>
+                <div class="stats-chart-section">
+                    <div class="stats-chart-title">📈 Desempenho por Categoria</div>
+                    <div class="stats-chart-bars" id="stats-chart-bars"></div>
+                </div>
+                <div class="stats-chart-section">
+                    <div class="stats-chart-title">🎯 Força por Faixa Etária</div>
+                    <div class="stats-age-bars" id="stats-age-bars"></div>
+                </div>
+                <div class="stats-chart-section">
+                    <div class="stats-chart-title">📅 Últimos 7 dias</div>
+                    <div class="stats-week-chart" id="stats-week-chart"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== TELA DE CATEGORIAS ========== -->
+        <section id="screen-categories" class="screen">
+            <div class="container">
+                <div class="header-bar">
+                    <button class="btn-back" onclick="showScreen('screen-home')">←</button>
+                    <h2 id="category-title">Categorias</h2>
+                    <div class="header-gems">💎 <span id="header-gems">0</span></div>
+                </div>
+                <div class="player-level-bar">
+                    <div class="level-info">
+                        <span class="level-label">Nível:</span>
+                        <span class="level-name" id="level-name">Iniciante</span>
+                    </div>
+                    <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+                    <span class="xp-text" id="xp-text">0/100 XP</span>
+                </div>
+                <div class="categories-grid" id="categories-grid"></div>
+            </div>
+        </section>
+
+        <!-- ========== TELA DO QUIZ ========== -->
+        <section id="screen-quiz" class="screen">
+            <div class="container">
+                <div class="quiz-header">
+                    <button class="btn-back" onclick="confirmExit()">✕</button>
+                    <div class="quiz-progress">
+                        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                        <span class="progress-text" id="progress-text">1/10</span>
+                    </div>
+                    <div class="quiz-timer">
+                        <svg class="timer-svg" viewBox="0 0 36 36">
+                            <path class="timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            <path class="timer-fill" id="timer-path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        </svg>
+                        <span class="timer-text" id="timer-text">30</span>
+                    </div>
+                </div>
+
+                <!-- Hints Bar -->
+                <div class="hints-bar">
+                    <button class="hint-btn" id="hint-fifty" onclick="useHint('fifty')" title="Eliminar 2 erradas">
+                        <span class="hint-icon">🎯</span>
+                        <span class="hint-label">50:50</span>
+                        <span class="hint-cost">💎5</span>
+                    </button>
+                    <button class="hint-btn" id="hint-skip" onclick="useHint('skip')" title="Pular pergunta">
+                        <span class="hint-icon">⏭️</span>
+                        <span class="hint-label">Pular</span>
+                        <span class="hint-cost">💎8</span>
+                    </button>
+                    <button class="hint-btn" id="hint-time" onclick="useHint('time')" title="Tempo extra">
+                        <span class="hint-icon">⏰</span>
+                        <span class="hint-label">+15s</span>
+                        <span class="hint-cost">💎3</span>
+                    </button>
+                    <button class="hint-btn" id="hint-verse" onclick="useHint('verse')" title="Ver versículo">
+                        <span class="hint-icon">📖</span>
+                        <span class="hint-label">Dica</span>
+                        <span class="hint-cost">💎4</span>
+                    </button>
+                </div>
+
+                <div class="quiz-score-bar">
+                    <div class="combo-indicator" id="combo-indicator">
+                        <span class="combo-text">🔥 x<span id="combo-count">1</span></span>
+                    </div>
+                    <div class="quiz-gems">💎 <span id="quiz-gems">0</span></div>
+                    <div class="quiz-points"><span id="quiz-score">0</span> pts</div>
+                </div>
+
+                <div class="question-card" id="question-card">
+                    <div class="question-category-badge" id="question-category-badge"></div>
+                    <div class="question-number" id="question-number">Pergunta 1</div>
+                    <h3 class="question-text" id="question-text"></h3>
+                    <p class="question-reference" id="question-reference"></p>
+                    <div class="question-hint-text hidden" id="question-hint-text"></div>
+                </div>
+
+                <div class="options-container" id="options-container"></div>
+
+                <div class="feedback-card hidden" id="feedback-card">
+                    <div class="feedback-icon" id="feedback-icon"></div>
+                    <h3 class="feedback-title" id="feedback-title"></h3>
+                    <p class="feedback-text" id="feedback-text"></p>
+                    <p class="feedback-verse" id="feedback-verse"></p>
+                    <div class="feedback-gems hidden" id="feedback-gems">
+                        <span>💎 +<span id="feedback-gems-value">0</span> Gemas</span>
+                    </div>
+                    <button class="btn-next" id="btn-next" onclick="nextQuestion()">Próxima Pergunta →</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== TELA DE RESULTADO ========== -->
+        <section id="screen-result" class="screen">
+            <div class="container">
+                <div class="result-card">
+                    <div class="result-animation" id="result-animation"></div>
+                    <div class="result-stars" id="result-stars"></div>
+                    <h2 class="result-title" id="result-title"></h2>
+                    <p class="result-message" id="result-message"></p>
+                    <div class="result-stats">
+                        <div class="result-stat"><div class="result-stat-value" id="result-correct">0</div><div class="result-stat-label">Acertos</div></div>
+                        <div class="result-stat"><div class="result-stat-value" id="result-total">0</div><div class="result-stat-label">Perguntas</div></div>
+                        <div class="result-stat"><div class="result-stat-value" id="result-points">0</div><div class="result-stat-label">Pontos</div></div>
+                        <div class="result-stat"><div class="result-stat-value" id="result-time">0s</div><div class="result-stat-label">Tempo</div></div>
+                    </div>
+                    <div class="result-rewards">
+                        <div class="result-xp-gain" id="result-xp-gain">+0 XP</div>
+                        <div class="result-gems-gain" id="result-gems-gain">💎 +0</div>
+                    </div>
+                    <div class="result-achievements hidden" id="result-achievements">
+                        <h3 class="result-ach-title">🏅 Conquistas Desbloqueadas!</h3>
+                        <div class="result-ach-list" id="result-ach-list"></div>
+                    </div>
+                    <div class="result-verse-card">
+                        <p class="verse-text" id="result-verse-text"></p>
+                        <span class="verse-ref" id="result-verse-ref"></span>
+                    </div>
+                    <div class="result-buttons">
+                        <button class="btn-primary" onclick="restartQuiz()">🔄 Jogar Novamente</button>
+                        <button class="btn-secondary" onclick="showScreen('screen-categories')">📚 Categorias</button>
+                        <button class="btn-secondary" onclick="showScreen('screen-home')">🏠 Início</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== TELA DE CONQUISTAS ========== -->
+        <section id="screen-achievements" class="screen">
+            <div class="container">
+                <div class="header-bar">
+                    <button class="btn-back" onclick="showScreen('screen-home')">←</button>
+                    <h2>Conquistas</h2>
+                    <div class="ach-counter"><span id="ach-unlocked">0</span>/<span id="ach-total">0</span></div>
+                </div>
+                <div class="ach-progress-bar"><div class="ach-progress-fill" id="ach-progress-fill" style="width:0%"></div></div>
+                <div class="ach-filter-tabs">
+                    <button class="ach-tab active" onclick="filterAchievements('all',this)">Todas</button>
+                    <button class="ach-tab" onclick="filterAchievements('unlocked',this)">✅ Desbloqueadas</button>
+                    <button class="ach-tab" onclick="filterAchievements('locked',this)">🔒 Bloqueadas</button>
+                </div>
+                <div class="achievements-list" id="achievements-list"></div>
+            </div>
+        </section>
+
+        <!-- ========== TELA DE RECOMPENSAS DIÁRIAS ========== -->
+        <section id="screen-daily" class="screen">
+            <div class="container">
+                <div class="header-bar">
+                    <button class="btn-back" onclick="showScreen('screen-home')">←</button>
+                    <h2>Recompensas Diárias</h2>
+                    <div></div>
+                </div>
+                <div class="daily-hero">
+                    <div class="daily-hero-icon" id="daily-hero-icon">🎁</div>
+                    <h3 class="daily-hero-title" id="daily-hero-title">Dia 1 de 7</h3>
+                    <p class="daily-hero-sub" id="daily-hero-sub">Volte todos os dias!</p>
+                </div>
+                <div class="daily-calendar" id="daily-calendar"></div>
+                <button class="btn-daily-claim" id="btn-daily-claim" onclick="claimDailyReward()">
+                    <span class="btn-daily-icon">🎁</span>
+                    <span class="btn-daily-text">Coletar Recompensa!</span>
+                </button>
+                <div class="daily-bonus-section">
+                    <h3 class="daily-bonus-title">🌟 Bônus de Sequência</h3>
+                    <div class="daily-bonus-cards" id="daily-bonus-cards"></div>
+                </div>
+                <div class="daily-history">
+                    <h3 class="daily-history-title">📋 Histórico Recente</h3>
+                    <div class="daily-history-list" id="daily-history-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== TELA DE RANKING ========== -->
+        <section id="screen-ranking" class="screen">
+            <div class="container">
+                <div class="header-bar">
+                    <button class="btn-back" onclick="showScreen('screen-home')">←</button>
+                    <h2>Ranking</h2>
+                    <div></div>
+                </div>
+                <div class="ranking-tabs">
+                    <button class="tab-btn active" onclick="switchRankingTab('all',this)">Geral</button>
+                    <button class="tab-btn" onclick="switchRankingTab('children',this)">Crianças</button>
+                    <button class="tab-btn" onclick="switchRankingTab('kids',this)">Juniores</button>
+                    <button class="tab-btn" onclick="switchRankingTab('teens',this)">Adolescentes</button>
+                    <button class="tab-btn" onclick="switchRankingTab('adults',this)">Adultos</button>
+                    <button class="tab-btn" onclick="switchRankingTab('scholars',this)">Teólogos</button>
+                </div>
+                <div class="ranking-list" id="ranking-list"></div>
+                <button class="btn-danger" onclick="clearRanking()">🗑 Limpar Ranking</button>
+            </div>
+        </section>
+
+        <!-- ========== TELA DE CONFIGURAÇÕES ========== -->
+        <section id="screen-settings" class="screen">
+            <div class="container">
+                <div class="header-bar">
+                    <button class="btn-back" onclick="showScreen('screen-home')">←</button>
+                    <h2>Configurações</h2>
+                    <div></div>
+                </div>
+                <div class="settings-list">
+                    <div class="settings-item">
+                        <div class="settings-info"><span class="settings-icon">🎨</span><span>Tema</span></div>
+                        <button class="settings-toggle" id="settings-theme-toggle" onclick="toggleTheme()">
+                            <span id="settings-theme-label">Escuro</span>
+                        </button>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-info"><span class="settings-icon">🔊</span><span>Sons</span></div>
+                        <button class="settings-toggle" id="settings-sound-toggle" onclick="toggleSound()">
+                            <span id="settings-sound-label">Ligado</span>
+                        </button>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-info"><span class="settings-icon">📳</span><span>Vibração</span></div>
+                        <button class="settings-toggle" id="settings-vibration-toggle" onclick="toggleVibration()">
+                            <span id="settings-vibration-label">Ligado</span>
+                        </button>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-info"><span class="settings-icon">👤</span><span>Editar Perfil</span></div>
+                        <button class="btn-icon" onclick="showScreen('screen-profile')">→</button>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Dados</h3>
+                    <button class="btn-secondary" onclick="exportData()">📤 Exportar Dados</button>
+                    <button class="btn-secondary" onclick="importDataPrompt()" style="margin-top:8px;">📥 Importar Dados</button>
+                    <button class="btn-danger" onclick="resetAllData()" style="margin-top:8px;">🗑 Resetar Tudo</button>
+                </div>
+                <div class="settings-footer">
+                    <p>Quiz Bíblico v2.0</p>
+                    <p>Feito com ❤️ e Fé</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal-overlay hidden" id="modal-overlay">
+        <div class="modal">
+            <h3 class="modal-title" id="modal-title">Sair do Quiz?</h3>
+            <p class="modal-text" id="modal-text">Seu progresso será perdido.</p>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn-danger" id="modal-confirm-btn" onclick="exitQuiz()">Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="achievement-popup hidden" id="achievement-popup">
+        <div class="ach-popup-card">
+            <div class="ach-popup-glow"></div>
+            <div class="ach-popup-badge">🏅 CONQUISTA DESBLOQUEADA!</div>
+            <div class="ach-popup-icon" id="ach-popup-icon">🏆</div>
+            <h3 class="ach-popup-name" id="ach-popup-name"></h3>
+            <p class="ach-popup-desc" id="ach-popup-desc"></p>
+            <div class="ach-popup-reward" id="ach-popup-reward"></div>
+            <button class="btn-primary" onclick="closeAchievementPopup()">Incrível! ✨</button>
+        </div>
+    </div>
+
+    <div class="daily-popup hidden" id="daily-popup">
+        <div class="daily-popup-card">
+            <div class="daily-popup-glow"></div>
+            <div class="daily-popup-icon" id="daily-popup-icon">🎁</div>
+            <h3 class="daily-popup-title" id="daily-popup-title"></h3>
+            <div class="daily-popup-rewards" id="daily-popup-rewards"></div>
+            <p class="daily-popup-verse" id="daily-popup-verse"></p>
+            <button class="btn-primary" onclick="closeDailyPopup()">Amém! 🙏</button>
+        </div>
+    </div>
+
+    <div class="toast hidden" id="toast">
+        <span class="toast-icon" id="toast-icon"></span>
+        <span class="toast-message" id="toast-message"></span>
+    </div>
+
+    <!-- Import data modal -->
+    <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importDataFile(event)">
+
+    <script src="js/questions.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/daily-rewards.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>
